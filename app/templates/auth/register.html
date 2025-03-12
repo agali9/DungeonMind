@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+{% block title %}Swear an oath · Embervale{% endblock %}
+{% block page_class %}auth{% endblock %}
+{% block head %}
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Crimson+Pro:ital,wght@0,400;0,500;1,400&family=JetBrains+Mono:wght@400;600&display=swap"
+  />
+  <style>
+    :root {
+      --ink-obsidian: #0a0908;
+      --parch: #e8d9b8;
+      --ember: #d98a3a;
+      --ink-char: #14100c;
+      --ink-soot: #1d1812;
+      --ember-bright: #f0a353;
+      --ember-deep: #9e5a1c;
+      --border-soft: rgba(232, 217, 184, 0.12);
+      --border-mid: rgba(232, 217, 184, 0.22);
+    }
+
+    .page-auth {
+      margin: 0;
+      min-height: 100dvh;
+      display: grid;
+      place-items: center;
+      color: var(--parch);
+      font-family: "Crimson Pro", Georgia, "Times New Roman", serif;
+      background: var(--ink-obsidian);
+      background-image:
+        radial-gradient(ellipse 80% 50% at 50% -10%, rgba(217, 138, 58, 0.1), transparent 60%),
+        radial-gradient(ellipse 60% 40% at 100% 100%, rgba(141, 110, 184, 0.08), transparent 60%);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .auth-shell {
+      width: min(94vw, 980px);
+      display: grid;
+      grid-template-columns: minmax(320px, 460px);
+      gap: 40px;
+      padding: 24px;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .auth-card {
+      background: linear-gradient(160deg, var(--ink-soot), var(--ink-char));
+      border: 1px solid var(--border-soft);
+      border-radius: 20px;
+      padding: 40px 32px;
+      box-shadow:
+        0 14px 48px rgba(0, 0, 0, 0.55),
+        0 0 24px rgba(217, 138, 58, 0.25);
+      color: var(--parch);
+    }
+
+    .display-title {
+      margin: 0 0 8px;
+      text-align: center;
+      font-family: "Cinzel", "Trajan Pro", Georgia, serif;
+      font-size: clamp(42px, 6vw, 58px);
+      line-height: 1;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      background: linear-gradient(180deg, var(--parch), var(--ember));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      filter: drop-shadow(0 2px 10px rgba(217, 138, 58, 0.2));
+    }
+
+    .subtitle {
+      margin: 0 0 32px;
+      text-align: center;
+      color: rgba(232, 217, 184, 0.8);
+      font-style: italic;
+      font-size: 20px;
+    }
+
+    .auth-form {
+      display: grid;
+      gap: 16px;
+    }
+
+    .field {
+      display: block;
+    }
+
+    .field-label {
+      display: block;
+      margin-bottom: 6px;
+      font-family: "Cinzel", "Trajan Pro", Georgia, serif;
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(232, 217, 184, 0.75);
+    }
+
+    .field input {
+      width: 100%;
+      min-height: 48px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border-mid);
+      background: var(--ink-char);
+      color: var(--parch);
+      font-family: "Crimson Pro", Georgia, "Times New Roman", serif;
+      font-size: 16px;
+      outline: none;
+      appearance: none;
+      transition: border-color 200ms ease, box-shadow 200ms ease;
+    }
+
+    .field input::placeholder {
+      color: rgba(232, 217, 184, 0.45);
+    }
+
+    .field input:focus {
+      border-color: var(--ember);
+      box-shadow: 0 0 0 2px rgba(217, 138, 58, 0.25);
+    }
+
+    .btn.btn-primary {
+      width: 100%;
+      min-height: 48px;
+      margin-top: 8px;
+      border-radius: 8px;
+      border: 1px solid var(--ember);
+      background: linear-gradient(180deg, var(--ember-bright), var(--ember-deep));
+      color: var(--ink-obsidian);
+      font-family: "Cinzel", "Trajan Pro", Georgia, serif;
+      font-size: 14px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 700;
+      cursor: pointer;
+      appearance: none;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), 0 0 14px rgba(217, 138, 58, 0.35);
+      transition: transform 140ms ease, filter 200ms ease;
+    }
+
+    .btn.btn-primary:hover {
+      filter: brightness(1.06);
+    }
+
+    .btn.btn-primary:active {
+      transform: scale(0.98);
+    }
+
+    .auth-aside {
+      margin-top: 24px;
+      text-align: center;
+      color: rgba(232, 217, 184, 0.8);
+      font-size: 16px;
+    }
+
+    .auth-aside a {
+      color: var(--ember-bright);
+      text-decoration: none;
+      border-bottom: 1px dotted var(--ember);
+    }
+
+    .auth-aside a:hover {
+      color: var(--parch);
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+<main class="auth-shell">
+  <div class="auth-card">
+    <h1 class="display-title">Embervale</h1>
+    <p class="subtitle">Begin your tale.</p>
+
+    <form method="post" novalidate class="auth-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+      <label class="field">
+        <span class="field-label">Display name</span>
+        <input type="text" name="display_name" maxlength="64" required autofocus />
+      </label>
+
+      <label class="field">
+        <span class="field-label">Email</span>
+        <input type="email" name="email" autocomplete="email" required />
+      </label>
+
+      <label class="field">
+        <span class="field-label">Password <small>(8+ chars)</small></span>
+        <input type="password" name="password" autocomplete="new-password" required minlength="8" />
+      </label>
+
+      <button type="submit" class="btn btn-primary">Swear the oath</button>
+    </form>
+
+    <p class="auth-aside">
+      Already a traveler? <a href="{{ url_for('auth.login') }}">Return to Embervale</a>.
+    </p>
+  </div>
+</main>
+{% endblock %}

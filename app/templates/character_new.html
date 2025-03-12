@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}New Character · {{ campaign.name }}{% endblock %}
+{% block page_class %}character-new{% endblock %}
+
+{% block content %}
+<main class="lobby-shell">
+  <header class="lobby-header">
+    <h1 class="display-title">New Adventurer</h1>
+    <p class="lobby-brief">{{ campaign.name }}</p>
+  </header>
+
+  <section class="lobby-card">
+    <form id="create-char-form" class="create-form" data-campaign-id="{{ campaign.id }}" data-max-rolls="3">
+      <label class="field">
+        <span class="field-label">Name</span>
+        <input name="name" maxlength="64" required autofocus placeholder="Arya Nightwhisper" />
+      </label>
+
+      <label class="field">
+        <span class="field-label">Race</span>
+        <select name="race">
+          <option>Human</option><option>Elf</option><option>Dwarf</option>
+          <option>Halfling</option><option>Half-Orc</option><option>Tiefling</option>
+        </select>
+      </label>
+
+      <fieldset class="class-picker" aria-label="Class">
+        <legend class="field-label">Class</legend>
+        <div class="class-grid">
+          {% for key, stats in classes.items() %}
+          <label class="class-option">
+            <input type="radio" name="class" value="{{ key }}" {% if loop.first %}checked{% endif %} />
+            <span class="class-card">
+              <span class="class-name">{{ key | upper }}</span>
+              <span class="class-stats">
+                HP {{ stats.hp }} · AC {{ stats.ac }}<br />
+                STR {{ stats.str }} · DEX {{ stats.dex }} · CON {{ stats.con }}
+              </span>
+            </span>
+          </label>
+          {% endfor %}
+        </div>
+      </fieldset>
+
+      <div class="char-rolls">
+        <button type="button" class="btn-ghost" id="roll-stats-btn">Roll Stats</button>
+        <span id="roll-counter" class="roll-counter">Rolls remaining: 3</span>
+        <div id="rolled-stats" class="class-stats">No roll yet.</div>
+      </div>
+
+      <button type="submit" class="btn btn-primary">Enter the Story</button>
+      <a href="{{ url_for('game.index') }}" class="btn-ghost top-back-btn">← Back</a>
+      <p class="form-error" id="create-error" role="alert" hidden></p>
+    </form>
+  </section>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/character_new.js') }}"></script>
+{% endblock %}

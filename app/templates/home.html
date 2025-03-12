@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block title %}Home · Embervale{% endblock %}
+{% block page_class %}home{% endblock %}
+
+{% block content %}
+<main id="home-root" class="home-shell">
+  <div class="tavern-backdrop" aria-hidden="true"></div>
+  <div class="home-embers" aria-hidden="true">
+    <span class="ember-particle"></span><span class="ember-particle"></span><span class="ember-particle"></span>
+    <span class="ember-particle"></span><span class="ember-particle"></span><span class="ember-particle"></span>
+    <span class="ember-particle"></span><span class="ember-particle"></span><span class="ember-particle"></span>
+    <span class="ember-particle"></span><span class="ember-particle"></span><span class="ember-particle"></span>
+    <span class="ember-particle"></span><span class="ember-particle"></span><span class="ember-particle"></span>
+  </div>
+  <div class="home-hero">
+    <img src="{{ url_for('static', filename='dragon.svg') }}" class="dragon-hero-image animate-spin-slow" alt="" aria-hidden="true" />
+    <h1 class="home-title">EMBERVALE</h1>
+    <div class="home-menu">
+      <button type="button" class="home-menu-item" id="btn-new-game"><span class="menu-icon">✦</span>New Game</button>
+      <button type="button" class="home-menu-item" id="btn-resume"><span class="menu-icon">▶</span>Resume</button>
+      <button type="button" class="home-menu-item" id="btn-how-to-play"><span class="menu-icon">?</span>How to Play</button>
+    </div>
+  </div>
+</main>
+
+<section id="resume-panel" class="home-panel resume-panel home-overlay" hidden>
+  <div class="home-panel-head">
+    <button type="button" class="btn-ghost" data-back-menu>← Menu</button>
+    <h2>Your Campaigns</h2>
+  </div>
+  <ul class="home-campaign-list">
+    {% for campaign in campaigns %}
+    {% set my_char = my_chars.get(campaign.id) %}
+    <li class="home-campaign-row">
+      <span class="home-campaign-name">{{ campaign.name }}</span>
+      <span class="home-campaign-code">{{ campaign.join_code }}</span>
+      <span class="home-campaign-meta">{% if my_char %}{{ my_char.name }} · L{{ my_char.level }}{% else %}No character yet{% endif %}</span>
+      <span class="home-campaign-meta">Turn {{ campaign.turn_index }}</span>
+      {% if my_char %}
+      <a class="btn btn-primary" href="{{ url_for('game.play', campaign_id=campaign.id) }}">▶ Play</a>
+      {% else %}
+      <a class="btn btn-primary" href="{{ url_for('game.character_new', campaign_id=campaign.id) }}">+ Join</a>
+      {% endif %}
+    </li>
+    {% else %}
+    <li class="party-empty">No adventures yet. Start a new game to begin.</li>
+    {% endfor %}
+  </ul>
+  <form id="join-campaign-form" class="home-join-form">
+    <label class="field">
+      <span class="field-label">Join a friend's campaign</span>
+      <input name="code" maxlength="12" required placeholder="ABC123" />
+    </label>
+    <button type="submit" class="btn btn-primary">Join by code</button>
+    <p class="form-error" id="join-error" hidden></p>
+  </form>
+</section>
+
+<section id="howtoplay-panel" class="home-panel howtoplay-panel home-overlay" hidden>
+  <div class="home-panel-head">
+    <button type="button" class="btn-ghost" data-back-menu>← Back to Menu</button>
+    <h2>How To Play Embervale</h2>
+  </div>
+  <article class="home-help">
+    <p>You are an adventurer in a living world narrated by an AI Dungeon Master powered by Google Gemini. Everything you do is described in natural language — the DM responds, rolls dice, tracks your health, and moves the story forward.</p>
+    <h3>The Basics</h3>
+    <p>Type any action in the box at the bottom and press Act (or Enter). The DM will narrate what happens. There are no wrong answers.</p>
+    <p>Examples:</p>
+    <p>· "I walk into the tavern and ask the barkeep about the ruins."<br />· "I draw my sword and attack the hooded figure."<br />· "I search the chest for traps before opening it."</p>
+    <h3>Voice</h3>
+    <p>Click the microphone button to speak your action instead of typing. The DM's narration is read aloud automatically (click 🔊 to toggle).</p>
+    <h3>The Map</h3>
+    <p>The map on the left shows the world and your position. Use Zoom +/- to zoom, and Expand to go fullscreen. Your character's pin moves as you explore.</p>
+    <h3>Combat</h3>
+    <p>If you start a fight, the Battle screen opens. Click an enemy to target them, then describe your action. Turn order is determined by initiative rolls.</p>
+    <h3>Shops</h3>
+    <p>When you enter a shop, a store interface opens automatically. Buy items with gold. Your inventory updates in real time.</p>
+    <h3>Your Character</h3>
+    <p>Click Profile in the party panel to see your stats, inventory, and skills. Your HP, gold, and items are tracked automatically by the DM.</p>
+    <h3>Multiplayer</h3>
+    <p>Share your campaign's invite code with friends. Multiple players can act in the same world — everyone sees the same narration.</p>
+    <h3>Tips</h3>
+    <p>· Be specific — "I attack the goblin with my short sword" works better than "I attack"<br />· The DM remembers everything that happened this session<br />· You can attempt almost anything — the DM will adjudicate it fairly</p>
+  </article>
+</section>
+
+<dialog id="new-game-dialog" class="modal new-game-modal">
+  <header class="modal-head">
+    <h3 class="modal-title">Name your campaign</h3>
+    <button type="button" class="modal-close" data-close-modal aria-label="Close">✕</button>
+  </header>
+  <div class="modal-body">
+    <form id="new-campaign-form">
+      <label class="field">
+        <span class="field-label">Campaign name</span>
+        <input name="name" maxlength="60" required placeholder="The Embervale Chronicles" autofocus />
+      </label>
+      <button type="submit" class="btn btn-primary">Begin the tale</button>
+      <button type="button" class="btn-ghost" data-close-modal>Cancel</button>
+      <p id="new-campaign-error" class="form-error" hidden></p>
+    </form>
+  </div>
+</dialog>
+
+<form action="{{ url_for('auth.logout') }}" method="post" class="home-logout">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+  <button type="submit" class="btn-ghost">Log out</button>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/home.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,375 @@
+{% extends "base.html" %}
+{% block title %}{{ campaign.name }} · Playing{% endblock %}
+{% block page_class %}play{% endblock %}
+
+{% block content %}
+<div
+  id="game-root"
+  class="play-shell"
+  data-campaign-id="{{ campaign.id }}"
+  data-my-character-id="{{ my_char.id }}"
+  data-is-owner="{{ 'true' if is_owner else 'false' }}"
+  data-join-code="{{ campaign.join_code }}"
+>
+  <!-- === Top bar ==================================================== -->
+  <header class="play-topbar" role="banner">
+    <a class="btn-ghost top-back-btn" href="{{ url_for('game.lobby') }}">← Back</a>
+    <div class="campaign-id">
+      <span class="id-mark" aria-hidden="true">✦</span>
+      <span class="id-name">{{ campaign.name }}</span>
+      <span class="id-mode" data-bind="mode">exploration</span>
+      {% if is_owner %}
+      <button id="share-code-btn" class="icon-btn" type="button" title="Share invite code">
+        <span aria-hidden="true">🔗</span>
+        <span class="sr">Share invite code</span>
+      </button>
+      {% endif %}
+    </div>
+
+    <div class="top-actions">
+      <button id="party-toggle" class="icon-btn" title="Toggle party panel">
+        <span aria-hidden="true">👥</span>
+        <span class="sr">Toggle party panel</span>
+      </button>
+      <button id="tts-toggle" class="icon-btn" aria-pressed="true" title="DM voice: on">
+        <span aria-hidden="true">🔊</span>
+        <span class="sr">Toggle DM voice</span>
+      </button>
+      <button id="metrics-toggle" class="icon-btn" title="Show metrics">
+        <span aria-hidden="true">⚙</span>
+        <span class="sr">Metrics</span>
+      </button>
+      <form action="{{ url_for('auth.logout') }}" method="post" class="inline-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <button type="submit" class="icon-btn" title="Leave">⎋</button>
+      </form>
+    </div>
+  </header>
+
+  <!-- === Main grid: map | story | party ================================ -->
+  <main class="play-grid">
+
+    <!-- Map panel --------------------------------------------------- -->
+    <section class="panel panel-map" aria-label="World map">
+      <header class="panel-head">
+        <h2 class="panel-title">Embervale</h2>
+        <span class="panel-sub" data-bind="scene-hint">Hollow's End</span>
+      </header>
+
+      <div class="map-wrap">
+        <div class="map-base-texture" aria-hidden="true"></div>
+        <div class="map-ambient-layer" aria-hidden="true"></div>
+        <svg id="world-map" viewBox="0 0 1000 800" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Illustrated map of Embervale">
+          <defs>
+            <radialGradient id="map-base-grad" cx="54%" cy="50%" r="78%">
+              <stop offset="0%" stop-color="#42503e"/>
+              <stop offset="45%" stop-color="#384534"/>
+              <stop offset="100%" stop-color="#252f27"/>
+            </radialGradient>
+            <linearGradient id="map-river-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#446a88"/>
+              <stop offset="100%" stop-color="#305066"/>
+            </linearGradient>
+            <radialGradient id="map-vignette-grad" cx="50%" cy="50%" r="68%">
+              <stop offset="52%" stop-color="#0e1412" stop-opacity="0"/>
+              <stop offset="100%" stop-color="#060a09" stop-opacity="0.65"/>
+            </radialGradient>
+            <pattern id="map-grain" x="0" y="0" width="80" height="80" patternUnits="userSpaceOnUse">
+              <circle cx="8" cy="12" r="1" fill="#000" opacity="0.08"/>
+              <circle cx="26" cy="35" r="0.8" fill="#000" opacity="0.06"/>
+              <circle cx="52" cy="17" r="1.1" fill="#000" opacity="0.05"/>
+              <circle cx="70" cy="52" r="0.9" fill="#000" opacity="0.07"/>
+              <circle cx="38" cy="70" r="0.8" fill="#000" opacity="0.06"/>
+            </pattern>
+            <filter id="map-soft-shadow">
+              <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#090d0c" flood-opacity="0.45"/>
+            </filter>
+            <pattern id="map-path-dash" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+              <circle cx="2" cy="10" r="1.4" fill="#b8a772" opacity="0.9"/>
+              <circle cx="10" cy="10" r="1.1" fill="#9d8f62" opacity="0.7"/>
+            </pattern>
+            <symbol id="terrain-tree" viewBox="-12 -30 24 30">
+              <line x1="0" y1="-2" x2="0" y2="0" stroke="#3f2f23" stroke-width="2"/>
+              <polygon points="0,-28 -9,-14 9,-14" fill="#2f492f" stroke="#1d2e1d" stroke-width="0.8"/>
+              <polygon points="0,-20 -10,-7 10,-7" fill="#3a5938" stroke="#213422" stroke-width="0.8"/>
+              <polygon points="0,-12 -11,0 11,0" fill="#436341" stroke="#284028" stroke-width="0.8"/>
+            </symbol>
+            <symbol id="terrain-mountain" viewBox="-24 -28 48 28">
+              <polygon points="-22,0 -8,-18 6,0" fill="#5f625f" stroke="#2f3230" stroke-width="1"/>
+              <polygon points="-8,0 6,-22 20,0" fill="#70746f" stroke="#373c38" stroke-width="1"/>
+              <polygon points="6,-22 1,-13 11,-13" fill="#c9cbc8" opacity="0.75"/>
+            </symbol>
+            <symbol id="terrain-town" viewBox="-20 -20 40 24">
+              <rect x="-12" y="-8" width="24" height="14" rx="1.5" fill="#85704f" stroke="#3d2e22" stroke-width="1.2"/>
+              <polygon points="-14,-8 0,-18 14,-8" fill="#594533" stroke="#2f231a" stroke-width="1.2"/>
+              <rect x="-4" y="-1" width="8" height="7" fill="#3a2b1f" stroke="#2b1f17" stroke-width="0.7"/>
+            </symbol>
+            <symbol id="terrain-cave" viewBox="-20 -18 40 20">
+              <path d="M-16,0 Q-14,-10 -6,-14 Q0,-18 6,-14 Q14,-10 16,0 Z" fill="#696359" stroke="#302c26" stroke-width="1.3"/>
+              <path d="M-7,0 Q-6,-6 0,-8 Q6,-6 7,0 Z" fill="#111412" stroke="#242a26" stroke-width="0.8"/>
+            </symbol>
+          </defs>
+          <image href="{{ url_for('static', filename='map/base-map.svg') }}" x="0" y="0" width="1000" height="800" preserveAspectRatio="xMidYMid slice" opacity="0.92"/>
+          <rect x="0" y="0" width="1000" height="800" fill="url(#map-base-grad)" opacity="0.55"/>
+          <rect x="0" y="0" width="1000" height="800" fill="url(#map-grain)" opacity="0.5"/>
+
+          <!-- LAYER 1: Illustrated terrain -->
+          <g class="map-layer-terrain">
+            <path d="M58,250 Q162,144 300,170 Q470,200 572,142 Q670,92 804,148 Q914,196 936,290 Q964,388 906,484 Q822,614 642,648 Q426,690 276,640 Q132,590 76,476 Q34,388 58,250 Z" fill="#304236" stroke="#1f2c23" stroke-width="3"/>
+            <path d="M390,86 Q484,66 574,88 Q658,110 716,180 Q610,214 514,204 Q422,194 354,166 Q352,124 390,86 Z" fill="#4a4f4d" opacity="0.55"/>
+            <path d="M712,166 Q750,236 742,332 Q732,434 692,532 Q660,618 684,740" stroke="url(#map-river-grad)" stroke-width="22" fill="none" stroke-linecap="round" opacity="0.85"/>
+            <path d="M184,500 Q278,522 382,544 Q488,566 590,602" stroke="#5d4b34" stroke-width="11" fill="none" stroke-linecap="round" opacity="0.72"/>
+
+            <use href="#terrain-mountain" transform="translate(454,176) scale(1.25)"/>
+            <use href="#terrain-mountain" transform="translate(530,156) scale(1.35)"/>
+            <use href="#terrain-mountain" transform="translate(602,182) scale(1.2)"/>
+            <use href="#terrain-mountain" transform="translate(646,220) scale(1.08)"/>
+            <use href="#terrain-mountain" transform="translate(406,216) scale(1.05)"/>
+
+            <use href="#terrain-tree" transform="translate(158,312) scale(0.84)"/>
+            <use href="#terrain-tree" transform="translate(192,298) scale(0.9)"/>
+            <use href="#terrain-tree" transform="translate(224,286) scale(0.82)"/>
+            <use href="#terrain-tree" transform="translate(258,294) scale(0.9)"/>
+            <use href="#terrain-tree" transform="translate(286,312) scale(0.78)"/>
+            <use href="#terrain-tree" transform="translate(128,374) scale(0.98)"/>
+            <use href="#terrain-tree" transform="translate(164,360) scale(1.02)"/>
+            <use href="#terrain-tree" transform="translate(198,348) scale(1.05)"/>
+            <use href="#terrain-tree" transform="translate(234,350) scale(1.0)"/>
+            <use href="#terrain-tree" transform="translate(270,362) scale(0.96)"/>
+            <use href="#terrain-tree" transform="translate(306,372) scale(0.9)"/>
+            <use href="#terrain-tree" transform="translate(146,432) scale(1.1)"/>
+            <use href="#terrain-tree" transform="translate(184,422) scale(1.1)"/>
+            <use href="#terrain-tree" transform="translate(222,420) scale(1.08)"/>
+            <use href="#terrain-tree" transform="translate(258,426) scale(1.0)"/>
+            <use href="#terrain-tree" transform="translate(292,438) scale(0.92)"/>
+
+            <use href="#terrain-town" transform="translate(498,566) scale(1.05)"/>
+            <use href="#terrain-town" transform="translate(796,574) scale(0.95)"/>
+            <use href="#terrain-cave" transform="translate(690,278) scale(1.1)"/>
+          </g>
+
+          <!-- LAYER 2: Region shading -->
+          <g class="map-layer-regions" opacity="0.35">
+            <path d="M88,248 Q150,192 230,220 Q300,248 324,326 Q290,406 228,430 Q142,402 102,338 Q84,292 88,248 Z" fill="#3b5a3d"/>
+            <path d="M598,116 Q682,122 754,186 Q714,258 630,286 Q548,248 530,170 Q548,132 598,116 Z" fill="#6f5f4d"/>
+            <path d="M596,530 Q678,514 760,540 Q810,604 776,672 Q688,706 600,674 Q552,608 596,530 Z" fill="#304a56"/>
+          </g>
+
+          <!-- LAYER 3 + 4 dynamic -->
+          <g id="map-zoom-group">
+            <g id="map-routes"></g>
+            <g id="map-locations"></g>
+            <g id="map-pins"></g>
+          </g>
+
+          <g id="map-compass" transform="translate(902,106)" filter="url(#map-soft-shadow)">
+            <circle r="34" fill="#1b2420" stroke="#5f6a5f" stroke-width="1.4" opacity="0.86"/>
+            <circle r="26" fill="none" stroke="#7f8b7d" stroke-width="0.8" opacity="0.5"/>
+            <polygon points="0,-40 -5,-20 0,-26 5,-20" fill="#b0986a" stroke="#4b4031" stroke-width="0.7"/>
+            <polygon points="0,40 -5,20 0,26 5,20" fill="#54655b" stroke="#2e3a34" stroke-width="0.7"/>
+            <polygon points="40,0 20,-5 26,0 20,5" fill="#54655b" stroke="#2e3a34" stroke-width="0.7"/>
+            <polygon points="-40,0 -20,-5 -26,0 -20,5" fill="#54655b" stroke="#2e3a34" stroke-width="0.7"/>
+            <text y="-47" text-anchor="middle" font-family="Cinzel,serif" font-size="12" font-weight="700" fill="#b9a782">N</text>
+          </g>
+          <g transform="translate(28,726)" filter="url(#map-soft-shadow)">
+            <rect x="0" y="-26" width="198" height="62" rx="8" fill="#1a2320" stroke="#58625a" stroke-width="1.2" opacity="0.82"/>
+            <text x="99" y="-1" text-anchor="middle" font-family="Cinzel,serif" font-size="14" font-weight="700" fill="#c4b386">THE EMBERVALE</text>
+            <text x="99" y="18" text-anchor="middle" font-family="Cinzel,serif" font-size="10" fill="#899187" font-style="italic">charted frontier realm</text>
+          </g>
+
+          <rect x="0" y="0" width="1000" height="800" fill="url(#map-vignette-grad)" pointer-events="none"/>
+        </svg>
+      </div>
+
+      <div class="map-legend">
+        <div class="map-controls-floating">
+          <button type="button" id="explore-mode-btn" class="icon-btn map-fab" title="Toggle explore mode">✦</button>
+          <button type="button" id="map-center-btn" data-zoom="reset" class="icon-btn map-fab" title="Center map">◎</button>
+          <button type="button" id="map-zoom-in-btn" data-zoom="in" class="icon-btn map-fab" title="Zoom in">＋</button>
+          <button type="button" id="map-zoom-out-btn" data-zoom="out" class="icon-btn map-fab" title="Zoom out">－</button>
+          <button type="button" id="expand-btn" class="icon-btn map-fab" title="Expand map">⛶</button>
+        </div>
+        <span class="map-legend-copy" data-bind="legend">Living map</span>
+        <div id="map-tooltip" class="map-tooltip" hidden></div>
+      </div>
+    </section>
+
+    <!-- Story panel ------------------------------------------------ -->
+    <section class="panel panel-story" aria-label="Adventure story">
+      <header class="panel-head">
+        <h2 class="panel-title">Story</h2>
+        <span class="panel-sub" data-bind="turn-counter">turn 0</span>
+      </header>
+
+      <div id="log" class="story-stream" aria-live="polite" aria-relevant="additions">
+        <!-- Seed entry -->
+        <article class="story-card entry-scene">
+          <p>{{ campaign.current_scene }}</p>
+        </article>
+      </div>
+
+      <!-- Action composer ------------------------------------------ -->
+      <footer class="action-composer">
+        <div class="composer-row">
+          <button
+            id="mic-btn"
+            class="icon-btn mic-btn"
+            type="button"
+            aria-pressed="false"
+            title="Hold to speak"
+          >
+            <span aria-hidden="true">🎙</span>
+            <span class="sr">Voice input</span>
+          </button>
+          <textarea
+            id="action-input"
+            rows="2"
+            maxlength="800"
+            placeholder="What do you do? (Shift+Enter for newline)"
+            aria-label="Describe your action"
+          ></textarea>
+          <button id="send-btn" type="button" class="icon-btn btn-send" title="Send action">➤</button>
+        </div>
+        <div class="quick-actions" aria-label="Quick actions">
+          <button type="button" class="btn-ghost quick-action-btn" data-quick-action="I explore the surrounding area carefully.">Explore</button>
+          <button type="button" class="btn-ghost quick-action-btn" data-quick-action="I talk to the nearest friendly NPC.">Talk</button>
+          <button type="button" class="btn-ghost quick-action-btn" data-quick-action="I inspect the environment for clues, traps, or hidden details.">Inspect</button>
+        </div>
+        <div class="composer-hints">
+          <span id="mic-status" class="hint-muted"></span>
+          <span id="dm-status" class="hint-muted"></span>
+        </div>
+      </footer>
+    </section>
+
+    <!-- Party + quests rail -------------------------------------- -->
+    <aside class="panel panel-party" aria-label="Party and quest panel">
+      <header class="panel-head">
+        <h2 class="panel-title">Party</h2>
+        <button id="party-collapse-btn" type="button" class="icon-btn" title="Collapse party rail">⟨</button>
+      </header>
+      <ul id="party-list" class="party-rail"></ul>
+
+      <section class="quest-panel" aria-label="Active quest">
+        <h3 class="quest-title">Active Quest</h3>
+        <article class="quest-card">
+          <div class="quest-icon" aria-hidden="true">🧭</div>
+          <div>
+            <h4 id="quest-name">Echoes in Whisperwood</h4>
+            <p id="quest-description">Track the missing ranger from Hollow's End and discover what stirs beneath the old pines.</p>
+          </div>
+        </article>
+      </section>
+
+      <nav class="rail-actions" aria-label="Utility actions">
+        <button type="button" class="btn-ghost rail-action-btn">Inventory</button>
+        <button type="button" class="btn-ghost rail-action-btn">Spells</button>
+        <button type="button" class="btn-ghost rail-action-btn">Journal</button>
+        <button type="button" class="btn-ghost rail-action-btn">Map</button>
+      </nav>
+
+      <section id="metrics-panel" class="metrics-panel" hidden>
+        <h3>Session</h3>
+        <dl class="metric-grid">
+          <dt>Cache hit-rate</dt><dd data-bind="metric-hitrate">—</dd>
+          <dt>Avg latency</dt><dd data-bind="metric-latency">—</dd>
+          <dt>p95 latency</dt><dd data-bind="metric-p95">—</dd>
+          <dt>Tokens (in / out)</dt><dd data-bind="metric-tokens">—</dd>
+        </dl>
+      </section>
+    </aside>
+  </main>
+
+  <!-- === Shop modal ================================================== -->
+  <dialog id="shop-modal" class="modal modal-shop" aria-labelledby="shop-title">
+    <header class="modal-head">
+      <h3 id="shop-title" class="modal-title">Shop</h3>
+      <p class="modal-sub" data-bind="shop-keeper"></p>
+      <button type="button" class="modal-close" data-close-modal aria-label="Close">✕</button>
+    </header>
+    <div class="modal-body">
+      <div class="shop-gold-line">
+        <span>Your purse:</span>
+        <strong data-bind="player-gold">—</strong>
+        <span>gold</span>
+      </div>
+      <ul id="shop-items" class="shop-items"></ul>
+    </div>
+  </dialog>
+
+  <!-- === Battle modal =============================================== -->
+  <dialog id="battle-modal" class="modal modal-battle" aria-labelledby="battle-title">
+    <header class="modal-head">
+      <h3 id="battle-title" class="modal-title">Combat</h3>
+      <p class="modal-sub">
+        Round <span data-bind="battle-round">1</span>
+      </p>
+    </header>
+
+    <div class="modal-body">
+      <div class="battle-sides">
+        <section class="battle-side" aria-label="Allies">
+          <h4>Allies</h4>
+          <ul id="battle-allies" class="battle-list"></ul>
+        </section>
+        <section class="battle-side" aria-label="Enemies">
+          <h4>Enemies</h4>
+          <ul id="battle-enemies" class="battle-list"></ul>
+        </section>
+      </div>
+
+      <div class="battle-actions">
+        <label class="field">
+          <span class="field-label">Your move</span>
+          <input id="battle-action-input" maxlength="200" placeholder="Swing at the goblin with my short sword" />
+        </label>
+        <div class="battle-btns">
+          <button type="button" class="btn btn-attack" data-battle-verb="attack">Attack</button>
+          <button type="button" class="btn btn-cast" data-battle-verb="cast a spell">Cast</button>
+          <button type="button" class="btn btn-use" data-battle-verb="use an item">Use item</button>
+          <button type="button" class="btn btn-flee" data-battle-verb="flee">Flee</button>
+          <button type="button" class="btn btn-primary" id="battle-submit">Send</button>
+        </div>
+        <p id="battle-target-hint" class="hint-muted">Click an enemy to target.</p>
+      </div>
+    </div>
+  </dialog>
+
+  {% if is_owner %}
+  <dialog id="share-code-modal" class="modal" aria-labelledby="share-code-title">
+    <header class="modal-head">
+      <h3 id="share-code-title" class="modal-title">Invite code</h3>
+      <button type="button" class="modal-close" data-close-modal aria-label="Close">✕</button>
+    </header>
+    <div class="modal-body">
+      <p>Share this code with players who want to join your campaign.</p>
+      <p class="display-title" id="share-code-value">{{ campaign.join_code }}</p>
+      <button type="button" class="btn btn-primary" id="copy-share-code-btn">Copy</button>
+    </div>
+  </dialog>
+  {% endif %}
+
+  <dialog id="profile-modal" class="modal modal-profile" aria-labelledby="profile-title">
+    <header class="modal-head">
+      <h3 id="profile-title" class="modal-title">Profile</h3>
+      <p class="modal-sub" id="profile-subtitle"></p>
+      <button type="button" class="modal-close" data-close-modal aria-label="Close">✕</button>
+    </header>
+    <div class="modal-tabs" role="tablist">
+      <button role="tab" aria-selected="true" data-tab="stats">Stats</button>
+      <button role="tab" aria-selected="false" data-tab="inventory">Inventory</button>
+      <button role="tab" aria-selected="false" data-tab="skills">Skills</button>
+    </div>
+    <div class="modal-body">
+      <section id="tab-stats" role="tabpanel"></section>
+      <section id="tab-inventory" role="tabpanel" hidden></section>
+      <section id="tab-skills" role="tabpanel" hidden></section>
+    </div>
+  </dialog>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js" integrity="sha384-2huaZvOR9iDzHqslqwpR87isEmrfxqyWOF7hr7BY6KG0+hVKLoEXMPUJw3ynWuhO" crossorigin="anonymous"></script>
+<script src="{{ url_for('static', filename='js/play.js') }}"></script>
+{% endblock %}

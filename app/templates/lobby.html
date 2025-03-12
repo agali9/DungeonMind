@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block title %}Lobby · Embervale{% endblock %}
+{% block page_class %}lobby{% endblock %}
+
+{% block content %}
+<main class="lobby-shell">
+  <header class="lobby-header">
+    <h1 class="display-title">Your campaigns</h1>
+    <p class="lobby-brief">Create a private campaign, join by code, or jump into the public demo.</p>
+  </header>
+
+  <section class="lobby-card">
+    <h2>Your campaigns</h2>
+    <ul class="party-list">
+      {% for campaign in campaigns %}
+      {% set my_char = my_chars.get(campaign.id) %}
+      {% set membership = memberships.get(campaign.id) %}
+      <li class="party-row">
+        <span class="party-name">{{ campaign.name }}
+          {% if membership and membership.role == 'owner' %}
+            <span class="join-code-inline">{{ campaign.join_code }}</span>
+            <button type="button" class="copy-code-icon" title="Copy invite code" data-join-code="{{ campaign.join_code }}">📋</button>
+          {% endif %}
+        </span>
+        <span class="party-meta">
+          {% if my_char %}
+            {{ my_char.name }} · L{{ my_char.level }}
+          {% else %}
+            No character yet
+          {% endif %}
+        </span>
+        <span class="party-meta">Turn {{ campaign.turn_index }}</span>
+        {% if my_char %}
+          <a class="btn btn-primary" href="{{ url_for('game.play', campaign_id=campaign.id) }}">▶ Play</a>
+        {% else %}
+          <button type="button" class="btn btn-primary campaign-select-btn" data-campaign-id="{{ campaign.id }}">Create character</button>
+        {% endif %}
+        {% if membership and membership.role == 'owner' %}
+          <button type="button" class="btn-ghost copy-code-btn" data-join-code="{{ campaign.join_code }}">Share invite code</button>
+        {% endif %}
+      </li>
+      {% else %}
+      <li class="party-empty">You are not in any private campaigns yet.</li>
+      {% endfor %}
+    </ul>
+    <p class="hint-muted" id="copy-feedback"></p>
+  </section>
+
+  <section class="lobby-card">
+    <h2>Join a campaign</h2>
+    <form id="join-campaign-form" class="create-form">
+      <label class="field">
+        <span class="field-label">Join code</span>
+        <input name="code" maxlength="12" required placeholder="ABC123" />
+      </label>
+      <button type="submit" class="btn btn-primary">Join</button>
+      <p class="form-error" id="join-error" role="alert" hidden></p>
+    </form>
+  </section>
+
+  <section class="lobby-card">
+    <h2>Start a new campaign</h2>
+    <form id="new-campaign-form" class="create-form">
+      <label class="field">
+        <span class="field-label">Campaign name</span>
+        <input name="name" maxlength="120" required placeholder="Test Campaign" />
+      </label>
+      <button type="submit" class="btn btn-primary">Create campaign</button>
+      <p class="form-error" id="new-campaign-error" role="alert" hidden></p>
+    </form>
+  </section>
+
+  <section class="lobby-card">
+    <h2>Demo campaign</h2>
+    <p class="lobby-brief">{{ demo_campaign.world_brief }}</p>
+    {% set demo_char = my_chars.get(demo_campaign.id) %}
+    <div style="margin-top: 12px;">
+      {% if demo_char %}
+        <a class="btn btn-primary" href="{{ url_for('game.play', campaign_id=demo_campaign.id) }}">Resume demo</a>
+      {% else %}
+        <button type="button" class="btn btn-primary campaign-select-btn" data-campaign-id="{{ demo_campaign.id }}">Join demo</button>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="lobby-card">
+    <h2>Forge a new hero</h2>
+    <form id="create-char-form" class="create-form" data-campaign-id="{{ demo_campaign.id }}">
+      <p class="hint-muted">Selected campaign: <strong id="selected-campaign-id">{{ demo_campaign.id }}</strong></p>
+      <label class="field">
+        <span class="field-label">Name</span>
+        <input name="name" maxlength="64" required autofocus placeholder="Arya Nightwhisper" />
+      </label>
+
+      <label class="field">
+        <span class="field-label">Race</span>
+        <select name="race">
+          <option>Human</option><option>Elf</option><option>Dwarf</option>
+          <option>Halfling</option><option>Half-Orc</option><option>Tiefling</option>
+        </select>
+      </label>
+
+      <fieldset class="class-picker" aria-label="Class">
+        <legend class="field-label">Class</legend>
+        <div class="class-grid">
+          {% for key, stats in classes.items() %}
+          <label class="class-option">
+            <input type="radio" name="class" value="{{ key }}" {% if loop.first %}checked{% endif %} />
+            <span class="class-card">
+              <span class="class-name">{{ key | capitalize }}</span>
+              <span class="class-stats">
+                HP {{ stats.hp }} · AC {{ stats.ac }}
+              </span>
+            </span>
+          </label>
+          {% endfor %}
+        </div>
+      </fieldset>
+
+      <button type="submit" class="btn btn-primary">Enter Embervale</button>
+      <p class="form-error" id="create-error" role="alert" hidden></p>
+    </form>
+  </section>
+
+  <form action="{{ url_for('auth.logout') }}" method="post" class="logout-bar">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    <button type="submit" class="btn-ghost">Log out</button>
+  </form>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/lobby.js') }}"></script>
+{% endblock %}

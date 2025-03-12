@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0a0908" />
+  <title>{% block title %}Embervale · AI DM{% endblock %}</title>
+
+  <!-- Distinctive type pairing: Cinzel (display, serifed quasi-blackletter),
+       Crimson Pro (long-form narration serif), JetBrains Mono (mechanics).
+       Per UI UX Pro Max rule "font-pairing": heading personality paired with
+       a refined body face. We preload to keep FOIT short. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Crimson+Pro:ital,wght@0,400;0,500;1,400&family=JetBrains+Mono:wght@400;600&display=swap"
+  />
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}" />
+  {% block head %}{% endblock %}
+</head>
+<body class="page-{% block page_class %}default{% endblock %}">
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-stack" role="status" aria-live="polite">
+        {% for category, msg in messages %}
+          <div class="flash flash-{{ category }}">{{ msg }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  {% block content %}{% endblock %}
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>
