@@ -1,6 +1,4 @@
-# Embervale - Local Setup
-
-This README only covers how to run the app on your local machine.
+# Embervale: AI Dungeon Master - Local Setup
 
 ## Prerequisites
 
@@ -12,7 +10,7 @@ This README only covers how to run the app on your local machine.
 ## 1) Clone and enter the project
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/agali9/DungeonMind.git
 cd dnd-ai
 ```
 
