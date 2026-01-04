@@ -1,8 +1,10 @@
 from flask import Flask, request, render_template, redirect, url_for, jsonify
 from flask_sqlalchemy import SQLAlchemy
 import random
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
 player_data = []
 
@@ -27,3 +29,4 @@ def receive_list():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
